@@ -22,7 +22,7 @@
         </javac>
     </target>
     <target name="dist" depends="compile" description="generate distro">
-        <jar destfile="automaton-app.jar" basedir="${build}">
+        <jar destfile="${appjar}" basedir="${build}">
         	<fileset dir="${build}"/>
         	<restrict>
 		       <name name="**/*.class"/>
