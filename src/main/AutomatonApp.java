@@ -12,9 +12,11 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 
 import de.ls5.jlearn.interfaces.Automaton;
@@ -95,19 +97,21 @@ public class AutomatonApp {
 	}
 	
 	private void displayCommands() {
-		out.println("Available commands (1 to 6) with associated parameters behind []: " +
+		out.println("Available commands (1 to 7) with associated parameters behind []: " +
 				"\n 1. Load a new hypothesis [hypFile] \n " +
 				"2. Get trace to state [stateId] \n " +
 				"3. Get distinguishing seq between two states [stateId1, stateId2] \n " +
 				"4. Run test [testFile] \n " +
-				"4. Get an access sequence for every state [] \n " +
-				"5. Display welcome text [] \n " +
-				"6. Quit []");
+				"5. Get an access sequence for every state [] \n " +
+				"6. Display welcome text [] \n " +
+				"7. Quit []");
 	}
 	
 	public void play() throws IOException {
 		Automaton loadedHyp = null;
 		IdStateMapping map = null;
+		Map<State, Set<Tuple2<State, Symbol>>> predMap = null;
+		
 		displayWelcome();
 		while (true) {
 			displayCommands();
@@ -122,6 +126,8 @@ public class AutomatonApp {
 				if (loadedHyp != null) {
 					out.println("Loaded successfully");
 				}
+				predMap = new LinkedHashMap<>();
+				AutomatonUtils.generatePredecessorMap(loadedHyp, predMap);
 				break;
 			case "2":
 				if (loadedHyp == null) {
@@ -187,12 +193,23 @@ public class AutomatonApp {
 					}
 				}
 				break;
-				
 			case "5":
+				if (loadedHyp == null) {
+					out.println("Load a hyp first!");
+				} else {
+					for (Integer stateId=0; stateId<loadedHyp.getAllStates().size(); stateId++) {
+						List<Symbol> traceToState = AutomatonUtils.traceToState(loadedHyp, map.getStateWithId(stateId), predMap);
+						Collection<String> strings = getRoute(loadedHyp, loadedHyp.getStart(), traceToState, map);
+						out.println("Trace to state " + stateId + ": " + traceToState); 
+						out.println("Trace to state " + stateId + " (full):  " + strings);
+					}
+				}
+				
+			case "6":
 				displayWelcome();
 				break ;
 
-			case "6":
+			case "7":
 				out.println("Byee");
 				return ;
 			}

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -70,7 +71,7 @@ public class AutomatonUtils {
 		return traceToState(automaton, state, predMap);
 	}
 	
-	private static List<Symbol> traceToState(Automaton automaton, State state, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
+	public static List<Symbol> traceToState(Automaton automaton, State state, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
 		Set<State> visited = new HashSet<>();
 		Queue<VisitStruct> toVisit = new ArrayDeque<>();
 		toVisit.add(new VisitStruct(state, new LinkedList<>()));
@@ -112,10 +113,9 @@ public class AutomatonUtils {
 		
 	}
 	
-	private static void generatePredecessorMap(Automaton automaton, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
+	public static void generatePredecessorMap(Automaton automaton, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
 		List<Symbol> inputs = automaton.getAlphabet().getSymbolList();
 		java.util.Collections.sort(inputs);
-		predMap.put(automaton.getStart(), Collections.emptySet());
 		for (State state : automaton.getAllStates()) {
 			for (Symbol input : inputs) {
 				State succState = state.getTransitionState(input);
@@ -133,14 +133,24 @@ public class AutomatonUtils {
 			}
 		}
 	}
+	
+	
+	public static List<Symbol> distinguishingSeq(Automaton automaton, State state1, State state2, IdStateMapping map) {
+		Map<State, Set<Tuple2<State, Symbol>>> predMap = new LinkedHashMap<>();
+		generatePredecessorMap(automaton, predMap);
+		Alphabet alpha = automaton.getAlphabet();
+		List<Symbol> symbols = alpha.getSymbolList();
+		List<Symbol> distSeq = getDistinguishingSeq(automaton, symbols, state1, state2, map, predMap);
+		return distSeq;
+	}
 
 	/**
 	 * Gives a minimal distinguishing sequence. Be warned that the implementation is inefficient.
 	 */
-	public static List<Symbol> distinguishingSeq(Automaton automaton, State state1, State state2, IdStateMapping map) {
+	public static List<Symbol> distinguishingSeq(Automaton automaton, State state1, State state2, IdStateMapping map, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
 		Alphabet alpha = automaton.getAlphabet();
 		List<Symbol> symbols = alpha.getSymbolList();
-		List<Symbol> distSeq = getDistinguishingSeq(automaton, symbols, state1, state2, map);
+		List<Symbol> distSeq = getDistinguishingSeq(automaton, symbols, state1, state2, map, predMap);
 		return distSeq;
 	}
 	
@@ -161,9 +171,7 @@ public class AutomatonUtils {
 	}
 
 	private static List<Symbol> getDistinguishingSeq(Automaton automaton,
-		List<Symbol> symbols, State state1, State state2, IdStateMapping map) {
-		Map<State, Set<Tuple2<State, Symbol>>> predMap = new HashMap<>();
-		generatePredecessorMap(automaton, predMap);
+		List<Symbol> symbols, State state1, State state2, IdStateMapping map, Map<State, Set<Tuple2<State, Symbol>>> predMap) {
 		List<List<Symbol>> middleParts = new ArrayList<List<Symbol>>();
 		List<Symbol> traceToState1 = traceToState(automaton, state1, predMap);
 		List<Symbol> traceToState2 = traceToState(automaton, state2, predMap);
